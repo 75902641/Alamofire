@@ -479,6 +479,10 @@ public class Request {
                 underlyingQueue.async { self.processNextResponseSerializer() }
             }
         }
+        
+        if state.canTransitionTo(.resumed) && delegate?.startImmediately == true {
+            resume()
+        }
     }
 
     /// Returns the next response serializer closure to execute if there's one left.
@@ -895,6 +899,8 @@ extension Request {
 public protocol RequestDelegate: AnyObject {
     /// `URLSessionConfiguration` used to create the underlying `URLSessionTask`s.
     var sessionConfiguration: URLSessionConfiguration { get }
+    
+    var startImmediately: Bool { get }
 
     /// Notifies the delegate the `Request` has reached a point where it needs cleanup.
     ///
