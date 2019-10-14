@@ -267,7 +267,7 @@ public class Request {
 
     // All API must be called from underlyingQueue.
 
-    /// Called when a initial `URLRequest` has been created on behalf of the instance. If a `RequestAdapter` is active,
+    /// Called when an initial `URLRequest` has been created on behalf of the instance. If a `RequestAdapter` is active,
     /// the `URLRequest` will be adapted before being issued.
     ///
     /// - Parameter request: The `URLRequest` created.
@@ -480,11 +480,9 @@ public class Request {
             if mutableState.responseSerializerProcessingFinished {
                 underlyingQueue.async { self.processNextResponseSerializer() }
             }
-        }
-        
-        underlyingQueue.async {
-            if self.state.canTransitionTo(.resumed) && self.delegate?.startImmediately == true {
-                self.resume()
+            
+            if mutableState.state.canTransitionTo(.resumed) {
+                underlyingQueue.async { if self.delegate?.startImmediately == true { self.resume() } }
             }
         }
     }
