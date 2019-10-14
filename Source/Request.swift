@@ -65,7 +65,7 @@ public class Request {
 
     // MARK: - Initial State
 
-    /// `UUID` prividing a unique identifier for the `Request`, used in the `Hashable` and `Equatable` conformances.
+    /// `UUID` providing a unique identifier for the `Request`, used in the `Hashable` and `Equatable` conformances.
     public let id: UUID
     /// The serial queue for all internal async actions.
     public let underlyingQueue: DispatchQueue
@@ -115,7 +115,7 @@ public class Request {
         var error: AFError?
     }
 
-    /// Protected `MutableState` value that provides threadsafe access to state values.
+    /// Protected `MutableState` value that provides thread-safe access to state values.
     fileprivate let protectedMutableState: Protector<MutableState> = Protector(MutableState())
 
     /// `State` of the `Request`.
@@ -466,6 +466,8 @@ public class Request {
 
     /// Appends the response serialization closure to the instance.
     ///
+    ///  - Note: This method will also `resume` the instance if `delegate.startImmediately` returns `true`.
+    ///
     /// - Parameter closure: The closure containing the response serialization call.
     func appendResponseSerializer(_ closure: @escaping () -> Void) {
         protectedMutableState.write { mutableState in
@@ -480,8 +482,10 @@ public class Request {
             }
         }
         
-        if state.canTransitionTo(.resumed) && delegate?.startImmediately == true {
-            resume()
+        underlyingQueue.async {
+            if self.state.canTransitionTo(.resumed) && self.delegate?.startImmediately == true {
+                self.resume()
+            }
         }
     }
 
@@ -538,7 +542,7 @@ public class Request {
 
     /// Notifies the `Request` that the response serializer is complete.
     ///
-    /// - Parameter completion: The completion handler provided with the response serilizer, called when all serializers
+    /// - Parameter completion: The completion handler provided with the response serializer, called when all serializers
     ///                         are complete.
     func responseSerializerDidComplete(completion: @escaping () -> Void) {
         protectedMutableState.write { $0.responseSerializerCompletions.append(completion) }
